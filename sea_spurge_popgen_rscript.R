@@ -43,6 +43,13 @@ gl.report.secondaries(gl_filter4_repavg)
 gl_filter5_secondaries <- gl.filter.secondaries(gl_filter4_repavg, method = "random", v = 5)
 #produce a smearplot
 glPlot(gl_filter5_secondaries)
-
-
+#report call rate for individuals
+gl.report.callrate(gl_filter5_secondaries, method = "ind", plot = TRUE, v = 2)
+#filter call rate for individuals at 95%
+gl_filter6_ind_cr <- gl.filter.callrate(gl_filter5_secondaries,
+                                        method = "ind", threshold = 0.95,
+                                        recalc = TRUE, plot = TRUE)
+gl_filter7_loc_cr <- gl.filter.callrate(gl_filter6_ind_cr,
+                                        method = "loc", threshold = 0.95, recalc = TRUE,
+                                        mono.rm = TRUE, plot = TRUE, v = 2)
 
