@@ -52,6 +52,8 @@ gl_filter6_ind_cr <- gl.filter.callrate(gl_filter5_secondaries,
 gl_filter7_loc_cr <- gl.filter.callrate(gl_filter6_ind_cr,
                                         method = "loc", threshold = 0.95, recalc = TRUE,
                                         mono.rm = TRUE, plot = TRUE, v = 2)
+#convert genlight to treemix input file format
+gl2treemix(gl_filter7_loc_cr, outpath = "data")
 #change from genlight to genind
 gind_filter7_loc_cr <- gl2gi(gl_filter7_loc_cr, v =1)
 #Load Hierfstat
@@ -60,4 +62,5 @@ library(hierfstat)
 hf_filter7 <- genind2hierfstat(gind_filter7_loc_cr, pop = NULL)
 #calculate allelic richness
 allelic.richness(hf_filter7)
+
 
