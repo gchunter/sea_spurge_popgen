@@ -50,8 +50,11 @@ gl_filter6_ind_cr <- gl.filter.callrate(gl_filter5_secondaries,
                                         method = "ind", threshold = 0.95,
                                         recalc = TRUE, plot = TRUE)
 gl_filter7_loc_cr <- gl.filter.callrate(gl_filter6_ind_cr,
-                                        method = "loc", threshold = 0.95, recalc = TRUE,
+                                        method = "loc", threshold = 0.95, recalc = TRUE, 
                                         mono.rm = TRUE, plot = TRUE, v = 2)
+
+#population names in gl_filter7_loc_cr
+popNames(gl_filter7_loc_cr)
 #convert genlight to treemix input file format
 gl2treemix(gl_filter7_loc_cr, outpath = "data")
 #change from genlight to genind
@@ -60,7 +63,57 @@ gind_filter7_loc_cr <- gl2gi(gl_filter7_loc_cr, v =1)
 library(hierfstat)
 #convert genind to hierfstat format
 hf_filter7 <- genind2hierfstat(gind_filter7_loc_cr, pop = NULL)
+attach(hf_filter7)
+hf_filter7_loci <- hf_filter7[,c(2:752)]
+hf_filter7_pop <- hf_filter7$pop
+
+hf_filter7_basic_stats <- basic.stats(data.frame(hf_filter7_pop, 
+                                                 hf_filter7_loci),
+            diploid = TRUE, digits = 4)
 #calculate allelic richness
 allelic.richness(hf_filter7)
+#calculate basic statistics
+hf_filter7_basic_stats <- basic.stats(hf_filter7)
+
+hf_filter7
+
+?genind2hierfstat
+
+write.csv(hf_filter7, file = "hf_filter7.csv")
 
 
+
+
+
+head(hf_filter7)
+table(diploid[,1])
+table(hf_filter7[,1])
+data(gind_filter7_loc_cr)
+head(genind2hierfstat(gind_filter7_loc_cr)[,1:10])
+dim(hf_filter7)
+gind_filter7_loc_cr
+allele.count(hf_filter7, diploid = TRUE)
+allelic.richness(hf_filter7, diploid = TRUE)
+hf_ar <- allelic.richness(hf_filter7, diploid = TRUE)
+rm(hf_ar)
+hf_boot_fis <- boot.ppfis(hf_filter7,
+                          nboot = 10,
+                          quant = c(0.025, 0.975),
+                          diploid = TRUE,
+                          dig = 3)
+hf_boot_fis
+ho <- hf_filter7_basic_stats[["Ho"]]
+library(poppr)
+genind2genalex(gind_filter7_loc_cr,
+               filename = "gind_filter7_loc_cr.csv",
+               overwrite = FALSE,
+               quiet = FALSE,
+               pop = NULL,
+               allstrata = TRUE,
+               geo = FALSE,
+               sep = ",",
+               sequence = TRUE)
+gind_filter7_loc_cr
+genind2genalex(gind_filter7_loc_cr,
+               filename = "gind2.csv")
+library(adegenet)
