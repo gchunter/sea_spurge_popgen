@@ -10,7 +10,7 @@ library(strataG)
 
 #Assign dartseq file and ind file to a genlight object
 gl_all_samples <- gl.read.dart(filename = "data/Report_DEup19-4268_1_moreOrders_SNP_1.csv",
-                   ind.metafile = "data/sea_spurge_ind2_metrics.csv")
+                   ind.metafile = "data/sea_spurge_ind3_metrics.csv")
 
 #2. SNP FILTERING
 
@@ -40,56 +40,61 @@ levels(pop(gl_all_samples))
 gl.report.callrate(gl_all_samples)
 
 #filter on call rate and retain only those loci with less than 10% missing data
-gl_f1_callrate <- gl.filter.callrate(gl_all_samples, method = "loc",
+ss_gl_f1 <- gl.filter.callrate(gl_all_samples, method = "loc",
                                           threshold = 0.90, recalc = TRUE, plot = TRUE)
 
 #filter on departure of Hardy-Weinberg equilibrium for every loci
-gl_f2_hwe <- gl.filter.hwe(gl_f1_callrate,
+ss_gl_f2 <- gl.filter.hwe(ss_gl_f1,
                                 alpha = 0.05, basis = "any",
                                 bon = TRUE, v = 5)
 
-#report the minor allele frequencies for filter2_HWE
-gl.report.maf(gl_f2_hwe, v = 5)
+#report the minor allele frequencies for ss_gl_f2
+gl.report.maf(ss_gl_f2, v = 5)
 
 #filter on MAF at 0.01
-gl_f3_maf <- gl.filter.maf(gl_f2_hwe, threshold = 0.01, v = 5)
+ss_gl_f3 <- gl.filter.maf(ss_gl_f2, threshold = 0.01, v = 5)
 
 #report the reproducibility for the loci
-gl.report.repavg(gl_f3_maf)
+gl.report.repavg(ss_gl_f3)
 
 #filter out loci for thich the repeateability is less than 0.98
-gl_f4_repavg <- gl.filter.repavg(gl_f3_maf, threshold = 0.98, v = 3)
+ss_gl_f4 <- gl.filter.repavg(ss_gl_f3, threshold = 0.98, v = 3)
 
 #report the number of monomorphs
-gl.report.monomorphs(gl_f4_repavg)
+gl.report.monomorphs(ss_gl_f4)
 
 #report secondaries
-gl.report.secondaries(gl_f4_repavg)
+gl.report.secondaries(ss_gl_f4)
 
 #filter out secondaries
-gl_f5_second <- gl.filter.secondaries(gl_f4_repavg, method = "random", v = 5)
+ss_gl_f5 <- gl.filter.secondaries(ss_gl_f4, method = "random", v = 5)
 
 #produce a smearplot
-glPlot(gl_f5_second)
+glPlot(ss_gl_f5)
 
 #report call rate for individuals
-gl.report.callrate(gl_f5_second, method = "ind", plot = TRUE, v = 2)
+gl.report.callrate(ss_gl_f5, method = "ind", plot = TRUE, v = 2)
 
 #filter call rate for individuals at 95%
-gl_f6_ind_cr <- gl.filter.callrate(gl_f5_second,
-                                        method = "ind", threshold = 0.95,
+ss_gl_f6 <- gl.filter.callrate(ss_gl_f5,method = "ind", threshold = 0.95,
                                         recalc = TRUE, plot = TRUE)
-gl_f7_loc_cr <- gl.filter.callrate(gl_f6_ind_cr,
-                                        method = "loc", threshold = 0.95, recalc = TRUE, 
+
+#filte on call rate for loci at 95%
+ss_gl_f7 <- gl.filter.callrate(ss_gl_f6, method = "loc", threshold = 0.95, recalc = TRUE, 
                                         mono.rm = TRUE, plot = TRUE, v = 2)
 
-#population names in gl_f7_loc_cr
-popNames(gl_f7_loc_cr)
+#population names in ss_gl_f7
+popNames(ss_gl_f7)
+
+#number of individuals in each population in ss_gl_f7
+table(pop(ss_gl_f7))
 
 #3. GENETIC DIVERSITY
 
 #change from genlight to genind
-gi_f7_loc_cr <- gl2gi(gl_f7_loc_cr, v =1)
+gi_ss_gl_f7 <- gl2gi(ss_gl_f7, v =1)
+
+---------------------------------------------------------------------------
 
 #convert genind to gtypes
 gi_f7_g <- genind2gtypes(gi_f7_loc_cr)
@@ -201,7 +206,7 @@ genomic_converter(data = gl_f7_loc_cr,
 #convert genlight object to arlequin format using radiator genomic converter
 test <- genomic_converter(data = gi_f7_loc_cr, strata = NULL, output = "arlequin")
 
-
+gi_f7_loc_cr
 #5.POPULATION SPLITS
 
 #convert genlight to treemix input file format
