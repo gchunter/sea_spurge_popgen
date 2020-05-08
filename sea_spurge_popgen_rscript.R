@@ -5,12 +5,15 @@ library(adegenet)
 library(tidyverse)
 library(ggplot2)
 library(strataG)
+library(poppr)
+library(ggplot2)
+library(pegas)
 
 #1. SAMPLE SNP DATA
 
 #Assign dartseq file and ind file to a genlight object
 gl_all_samples <- gl.read.dart(filename = "data/Report_DEup19-4268_1_moreOrders_SNP_1.csv",
-                   ind.metafile = "data/sea_spurge_ind3_metrics.csv")
+                   ind.metafile = "data/sea_spurge_ind4_metrics.csv")
 
 #2. SNP FILTERING
 
@@ -83,6 +86,15 @@ ss_gl_f6 <- gl.filter.callrate(ss_gl_f5,method = "ind", threshold = 0.95,
 ss_gl_f7 <- gl.filter.callrate(ss_gl_f6, method = "loc", threshold = 0.95, recalc = TRUE, 
                                         mono.rm = TRUE, plot = TRUE, v = 2)
 
+#Recode the population names to reflect the states they were collected in
+ss_gl_f7_state <- gl.edit.recode.pop(ss_gl_f7)
+
+#Recode the population names to reflect the bioregion where they were collected
+ss_gl_f7_bioreg <- gl.edit.recode.pop(ss_gl_f7)
+
+#table of number of samples at the state level
+table(pop(ss_gl_f7_state))
+
 #population names in ss_gl_f7
 popNames(ss_gl_f7)
 
@@ -92,34 +104,87 @@ table(pop(ss_gl_f7))
 #3. GENETIC DIVERSITY
 
 #change from genlight to genind
-gi_ss_gl_f7 <- gl2gi(ss_gl_f7, v =1)
+
+#population level
+ss_gl_f7_gi <- gl2gi(ss_gl_f7, v =1)
+
+#state level
+ss_gl_f7_gi_state <- gl2gi(ss_gl_f7_state, v = 1)
+
+#bioreg level
+ss_gl_f7_gi_bioreg <- gl2gi(ss_gl_f7_bioreg, v = 1)
+
+#convert genind(gi) to genpop(gp)
+#population level
+ss_gl_f7_gi_gp <- genind2genpop(ss_gl_f7_gi, pop = NULL,
+                                quiet = FALSE, process.other = TRUE)
+
+#state level
+ss_gl_f7_gi_gp_state <- genind2genpop(ss_gl_f7_gi_state, pop = NULL,
+                                quiet = FALSE, process.other = TRUE)
+
+#bioreg level
+ss_gl_f7_gi_gp_bioreg <- genind2genpop(ss_gl_f7_gi_bioreg, pop = NULL,
+                                      quiet = FALSE, process.other = TRUE)
+
+
+#convert from genind (gi) to gtypes (gt) format for StrataG package
+#population level
+ss_gl_f7_gt <- genind2gtypes(ss_gl_f7_gi)
+
+#state level
+ss_gl_f7_gt_state <- genind2gtypes(ss_gl_f7_gi_state)
+
+#bioreg level
+ss_gl_f7_gt_bioreg <- genind2gtypes(ss_gl_f7_gi_bioreg)
+
+#Calculate summary stats for each stratum (population) seperately
+#population level
+ss_gl_f7_gt_allsum <- summarizeLoci(ss_gl_f7_gt, by.strata = TRUE)
+
+#state level
+ss_gl_f7_gt_state_allsum <- summarizeLoci(ss_gl_f7_gt_state, by.strata = TRUE)
+
+#bioreg level
+ss_gl_f7_gt_bioreg_allsum <- summarizeLoci(ss_gl_f7_gt_bioreg, by.strata = TRUE)
+
+#calculate the number of private alleles in each strata and locus with StrataG
+#population level
+ss_gl_f7_gt_priv_allele <- privateAlleles(ss_gl_f7_gt)
+
+pop_pri_alle_df <- data.frame(ss_gl_f7_gt_priv_allele) #change to data.frame
+colSums(pop_pri_alle_df)
+
+#state level
+ss_gl_f7_gt_state_priv_allele <- privateAlleles(ss_gl_f7_gt_state)
+
+state_pri_alle_df <- data.frame(ss_gl_f7_gt_state_priv_allele) #change to data.frame
+colSums(state_pri_alle_df) #sum each column
+
+#bioreg level
+ss_gl_f7_gt_bioreg_priv_allele <- privateAlleles(ss_gl_f7_gt_bioreg)
+
+bioreg_pri_alle_df <- data.frame(ss_gl_f7_gt_bioreg_priv_allele) #change to data.frame
+colSums(bioreg_pri_alle_df) #sum each column
+
+#convert genind to hierfstat
+ss_gl_f7_hf <- genind2hierfstat(ss_gl_f7_gi)
+
+ss_gl_f7_hf_loci <- ss_gl_f7_hf[,c(2:752)] #specify the loci
+ss_gl_f7_hf_pop <- ss_gl_f7_hf$pop #specify a vector of populaitons
+attach(ss_gl_f7_hf) #attach the hierfstat object
+ss_gl_f7_hf_basic_stats <- basic.stats(data.frame(ss_gl_f7_hf_pop,
+                                                  ss_gl_f7_hf_loci),
+                                       diploid = TRUE, digits = 4)
+
+
+ss_gl_f7_hf_basic_stats_Ho <- ss_gl_f7_hf_basic_stats[["Ho"]] #isolate Ho
+hf_basic_stats_Ho_df <- data.frame(ss_gl_f7_hf_basic_stats_Ho) # Ho to data frame
+colMeans(hf_basic_stats_Ho_df) #means of all columns in Ho
+
 
 ---------------------------------------------------------------------------
 
-#convert genind to gtypes
-gi_f7_g <- genind2gtypes(gi_f7_loc_cr)
-
-#calculate all summary stats for each stratum(population) seperately
-allsum_gi_f7_g <- summarizeLoci(gi_f7_g, by.strata = TRUE)
-write.csv(allsum_gi_f7_g,
-          file = "results/allsum_gi_f7_g.csv",
-          row.names = TRUE, col.names = TRUE)
-
-#Calculate the number of private alleles in each strata and locus
-pa_gi_f7_g <- privateAlleles(gi_f7_g)
-
-#write a csv of the private alleles object
-write.csv(pa_gi_f7_g, file = "results/pa_gi_f7_g.csv",
-          row.names = TRUE, col.names = TRUE)
-
-#convert genind to hierfstat format
-hf_f7 <- genind2hierfstat(gi_f7_loc_cr, pop = NULL)
-attach(hf_filter7)
-hf_filter7_loci <- hf_filter7[,c(2:752)]
-hf_filter7_pop <- hf_filter7$pop
-hf_filter7_basic_stats <- basic.stats(data.frame(hf_filter7_pop, 
-                                                 hf_filter7_loci),
-                                      diploid = TRUE, digits = 4)
 
 #Calculate basic.stats for hf_filter7 and assign to object
 hf_f7_bs <- basic.stats(hf_filter7, diploid = TRUE, digits = 4)
@@ -197,14 +262,23 @@ hf_filter7_basic_stats <- basic.stats(hf_filter7)
 
 #install and load radiator genomic converter
 library(radiator)
+
 ?genomic_converter
+
 genomic_converter(data = gl_f7_loc_cr,
                   strata = NULL,
                   filename = "gl_f7_arlequin.csv",
                   verbose = TRUE)
 
+genomic_converter(data = gi_ss_gl_f7, strata = NULL, output = "structure")
 #convert genlight object to arlequin format using radiator genomic converter
 test <- genomic_converter(data = gi_f7_loc_cr, strata = NULL, output = "arlequin")
+genomic_converter(data = gi_ss_gl_f7, strata = NULL, output = "arlequin")
+
+
+?genomic_converter
+
+
 
 gi_f7_loc_cr
 #5.POPULATION SPLITS
@@ -217,26 +291,57 @@ source("treemix/plotting_funcs.R")
 plot_tree("treemix/m2/gl7m2b100_stem")
 plot_resid("treemix/m4/gl7m4b100_stem", "treemix/poporder2")
 
-poporder <- list("Anxious Bay beach Elliston", "Aslings Beach Eden", "Balnarring Beach",
-                 "Bawley Point", "Beach near Lake Bunga", "Bennetts Beach Yacaaba Peninsula",
-                 "Bernie Central", "Birthday Bay Southwest", "Blossom Beach", "Bmerwerre Beach",                   
-                 "Boydtown beach", "Broulee South", "Brown Bay Port MacDonnell",
-                 "Camel Rock Beach", "Cape Borks Lighthouse", "Dunes Beach south west",            
-                 "Endeovon Bay SouthWest", "Esperence Harbour Beach", 
-                 "Greens Beach", "Hankerchief beach","Hardwick Bay", "Hilkier Bay", 
-                 "Kilcunda", "Lagoon Beach Lord Howe Island", "Loaders", 
-                 "Lone Pine Sleaford", "Lowlands Beach", "Lucky Bay", 
-                 "Maria Island", "Myponga beach", "North Bernie", "Pambula Beach", 
-                 "Pardoe Northdown", "Pardoe Northdown Conservation Area", 
-                 "Peppermint Grove Beach", "Port Latta", "Port Neill Foreshore Beach", 
-                 "Princetown Beach", "Pt Lesueur Maria Island", "Riedle Beach",
-                 "Rifle Butts Beach Port Victoria", "Silverleaves Phillip Island",
-                 "Ski Beach Tumby Bay", "Squeaky Beach", "Stansbury", "Steamers Beach", 
-                 "Tea Tree Lane", "Venus Bay", "West Beach Hopetoun", 
-                 "Woolamai Beach Phillip Island", "Yanchep")
+
+gl2structure(ss_gl_f7, indNames = NULL, addcolumns = NULL,
+             ploidy = 2, exportMarkerNames = TRUE,
+             outfile = "gl.str", outpath = ".", v = 5)
+gl.write.csv(ss_gl_f7, outfile = "ss_gl_f7.csv", outpath = "interim/")
+gl2structure(ss_gl_f7, indNames = NULL, ploidy = 0, exportMarkerNames = TRUE,
+             outfile = "interim/ss_gl_f7.str", outpath = "interim/")
+gi_ss_gl_f7_df <- genind2df(gi_ss_gl_f7, pop = NULL, usepop = FALSE, oneColPerAll = FALSE)
+View(gi_ss_gl_f7_df)
+rm(gi_ss_gl_f7_df)
+----------------------------------------------------------------------
+View(ss_gl_f7)
+
+gi_ss_gl_f7_gi2df <- genind2df(gi_ss_gl_f7, pop = TRUE,
+                               sep = " ", usepop = TRUE,
+                               oneColPerAll = TRUE)
+rm(gi_ss_gl_f7_gi2df)
+
+pca1 <- glPca(ss_gl_f7)
+pca1
+#glPca object can be displayed using scatter (a scatterplot of principal components)
+scatter(pca1, posi = "bottomright")
+title("PCA of sea spurge populaitons in Australia")
+library(ape)
+tre <- nj(dist(as.matrix(ss_gl_f7)))
+tre
+plot(tre, typ = "fan", cex = 0.7)
+title("NJ tree of the Aus data")
+
+myCol <- colorplot(pca1$scores, pca1$scores, transp = TRUE, cex = 4)
+abline(h = 0, v = 0, col = "grey")
+add.scatter.eig(pca1$eig[1:40], 2, 1, 2, posi = "topright", inset = .05, ratio = .3)
+
+plot(tre, typ = "fan", show.tip = FALSE)
+tiplabels(pch = 20, col = myCol, cex = 4)
+title("NJ tree of the Aus sea spurge data")
+
+#DAPC PCA
+dapc1 <- dapc(ss_gl_f7, n.pca = 10, n.da = 1)
+scatter(dapc1, scree.da = FALSE, bg = "white", posi.pca = "topright",
+        legend = TRUE, txt.leg = paste("group", 1:2), col = c("red", "blue"))
 
 
-
-
+#Write summarizeLoci data to .csv for all levels
+#population level
+write.csv(gt_ss_gl_f7_allsum,
+          file = "results/gt_ss_f7_allsum.csv",
+          row.names = TRUE, col.names = TRUE)
+#state level
+write.csv(gt_ss_gl_f7_state_allsum,
+          file = "interim/gt_ss_gl_f7_state_allsum.csv",
+          row.names = TRUE, col.names = TRUE)
 
 
