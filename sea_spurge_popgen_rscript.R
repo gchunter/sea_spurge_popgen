@@ -8,6 +8,7 @@ library(strataG)
 library(poppr)
 library(ggplot2)
 library(pegas)
+library(StAMPP)
 
 #1. SAMPLE SNP DATA
 
@@ -168,7 +169,9 @@ bioreg_pri_alle_df <- data.frame(ss_gl_f7_gt_bioreg_priv_allele) #change to data
 colSums(bioreg_pri_alle_df) #sum each column
 
 #convert genind to hierfstat
-ss_gl_f7_hf <- genind2hierfstat(ss_gl_f7_gi)
+ss_gl_f7_hf <- genind2hierfstat(ss_gl_f7_gi) #population level
+ss_gl_f7_hf_state <- genind2hierfstat(ss_gl_f7_gi_state) #state level
+ss_gl_f7_hf_bioreg <- genind2hierfstat(ss_gl_f7_gi_bioreg) #bioregion level
 
 ss_gl_f7_hf_loci <- ss_gl_f7_hf[,c(2:752)] #specify the loci
 ss_gl_f7_hf_pop <- ss_gl_f7_hf$pop #specify a vector of populaitons
@@ -177,88 +180,88 @@ ss_gl_f7_hf_basic_stats <- basic.stats(data.frame(ss_gl_f7_hf_pop,
                                                   ss_gl_f7_hf_loci),
                                        diploid = TRUE, digits = 4)
 
+ss_gl_f7_hf_state_basic_stats <- basic.stats(ss_gl_f7_hf_state,
+                                             diploid = TRUE, digits = 4)
+
+ss_gl_f7_hf_bioreg_basic_stats <- basic.stats(ss_gl_f7_hf_bioreg,
+                                              diploid = TRUE, digits = 4)
 
 ss_gl_f7_hf_basic_stats_Ho <- ss_gl_f7_hf_basic_stats[["Ho"]] #isolate Ho
 hf_basic_stats_Ho_df <- data.frame(ss_gl_f7_hf_basic_stats_Ho) # Ho to data frame
+hf_basic_stats_Ho_df[is.na(hf_basic_stats_Ho_df)] = 0 #change NA to 0
 colMeans(hf_basic_stats_Ho_df) #means of all columns in Ho
+
+ss_gl_f7_hf_basic_stats_Hs <- ss_gl_f7_hf_basic_stats[["Hs"]] #isolate Hs
+hf_basic_stats_Hs_df <- data.frame(ss_gl_f7_hf_basic_stats_Hs) # Hs to data frame
+hf_basic_stats_Hs_df[is.na(hf_basic_stats_Hs_df)] = 0 #change NA's to 0
+colMeans(hf_basic_stats_Hs_df) #means of all columns in Hs
+
+ss_gl_f7_hf_basic_stats_Fis <- ss_gl_f7_hf_basic_stats[["Fis"]] #isoalte Fis
+ss_gl_f7_hf_basic_stats_Fis_df <- data.frame(ss_gl_f7_hf_basic_stats_Fis)#Fis to data frame
+ss_gl_f7_hf_basic_stats_Fis_df[is.na(ss_gl_f7_hf_basic_stats_Fis_df)] = 0 #change NA to 0
+colMeans(ss_gl_f7_hf_basic_stats_Fis_df) #means of all columns in Fis
+
+ss_gl_f7_hf_state_basic_stats_Ho <- ss_gl_f7_hf_state_basic_stats[["Ho"]]
+hf_state_basic_stats_Ho_df <- data.frame(ss_gl_f7_hf_state_basic_stats_Ho)
+hf_state_basic_stats_Ho_df[is.na(hf_state_basic_stats_Ho_df)] = 0
+colMeans(hf_state_basic_stats_Ho_df)
+
+ss_gl_f7_hf_state_basic_stats_Hs <- ss_gl_f7_hf_state_basic_stats[["Hs"]]
+hf_state_basic_stats_Hs_df <- data.frame(ss_gl_f7_hf_state_basic_stats_Hs)
+hf_state_basic_stats_Hs_df[is.na(hf_state_basic_stats_Hs_df)] = 0
+colMeans(hf_state_basic_stats_Hs_df)
+
+ss_gl_f7_hf_state_basic_stats_Fis <- ss_gl_f7_hf_state_basic_stats[["Fis"]]
+hf_state_basic_stats_Fis_df <- data.frame(ss_gl_f7_hf_state_basic_stats_Fis)
+hf_state_basic_stats_Fis_df[is.na(hf_state_basic_stats_Fis_df)] = 0
+colMeans(hf_state_basic_stats_Fis_df)
+
+ss_gl_f7_hf_bioreg_basic_stats_Ho <- ss_gl_f7_hf_bioreg_basic_stats[["Ho"]]
+ss_gl_f7_hf_bioreg_basic_stats_Ho_df <- data.frame(ss_gl_f7_hf_bioreg_basic_stats_Ho)
+ss_gl_f7_hf_bioreg_basic_stats_Ho_df[is.na(ss_gl_f7_hf_bioreg_basic_stats_Ho_df)] = 0
+colMeans(ss_gl_f7_hf_bioreg_basic_stats_Ho_df)
+
+ss_gl_f7_hf_bioreg_basic_stats_Hs <- ss_gl_f7_hf_bioreg_basic_stats[["Hs"]]
+ss_gl_f7_hf_bioreg_basic_stats_Hs_df <- data.frame(ss_gl_f7_hf_bioreg_basic_stats_Hs)
+ss_gl_f7_hf_bioreg_basic_stats_Hs_df[is.na(ss_gl_f7_hf_bioreg_basic_stats_Hs_df)] = 0
+colMeans(ss_gl_f7_hf_bioreg_basic_stats_Hs_df)
+
+ss_gl_f7_hf_bioreg_basic_stats_Fis <- ss_gl_f7_hf_bioreg_basic_stats[["Fis"]]
+ss_gl_f7_hf_bioreg_basic_stats_Fis_df <- data.frame(ss_gl_f7_hf_bioreg_basic_stats_Fis)
+ss_gl_f7_hf_bioreg_basic_stats_Fis_df[is.na(ss_gl_f7_hf_bioreg_basic_stats_Fis_df)] = 0
+colMeans(ss_gl_f7_hf_bioreg_basic_stats_Fis_df)
+
+#Allelic Richness
+#population level
+f7_hf_ar <- allelic.richness(ss_gl_f7_hf, min.n = NULL, diploid = TRUE)
+f7_hf_ar_df <- data.frame(f7_hf_ar)
+f7_hf_ar_df[is.na(f7_hf_ar_df)] = 0
+colMeans(f7_hf_ar_df)
+
+#state level
+f7_hf_state_ar <- allelic.richness(ss_gl_f7_hf_state, min.n = NULL, diploid = TRUE)
+f7_hf_state_ar_df <- data.frame(f7_hf_state_ar)
+f7_hf_state_ar_df[is.na(f7_hf_state_ar_df)] = 0
+colMeans(f7_hf_state_ar_df)
+
+#bioregion level
+f7_hf_bioreg_ar <- allelic.richness(ss_gl_f7_hf_bioreg, min.n = NULL, diploid = TRUE)
+f7_hf_bioreg_ar_df <- data.frame(f7_hf_bioreg_ar)
+f7_hf_bioreg_ar_df[is.na(f7_hf_bioreg_ar_df)] = 0
+colMeans(f7_hf_bioreg_ar_df)
+
+rm(parameters)
+
+#4. POPULATION STRUCTURE
+
+#pairwise Fst
+
+
 
 
 ---------------------------------------------------------------------------
 
-
-#Calculate basic.stats for hf_filter7 and assign to object
-hf_f7_bs <- basic.stats(hf_filter7, diploid = TRUE, digits = 4)
-
-#allelic richness
-hf_f7_ar <- allelic.richness(hf_filter7, min.n = NULL, diploid = TRUE)
-
-#View allelic richness results
-View(hf_f7_ar[["Ar"]])
-
-#make a table of Ar values from hf_filter7
-table_hf_f7_ar <- hf_f7_ar[["Ar"]]
-
-#write a .csv file of table_hf_f7_ar
-write.csv(table_hf_f7_ar,
-          file = "results/table_hf_f7_ar.csv",
-          append = FALSE, quote = FALSE, row.names = TRUE,
-          col.names = TRUE)
-
-#Make a table of Hs values only from hf_f7_bs
-table_hf_f7_bs_Hs <- hf_f7_bs[["Hs"]]
-
-#write a .csv file of table_hf_f7_bs_Hs
-write.csv(table_hf_f7_bs_Hs,
-          file = "results/table_hf_f7_bs_Hs.csv",
-          append = FALSE, quote = FALSE, row.names = TRUE,
-          col.names = TRUE)
-
-#create a dataframe of Hs from the .csv file
-df_hf_f7_bs_Hs <- read_csv("results/table_hf_f7_bs_Hs.csv")
-
-#remove column X1
-df2_hf_f7_bs_Hs <- select(df_hf_f7_bs_Hs, -X1)
-
-#View Fis
-view(hf_f7_bs[["Fis"]])
-
-#make a table of Fis values only from hf_f7_bs
-table_hf_f7_bs_Fis <- hf_f7_bs[["Fis"]]
-
-#write a .csv of the table_hf_f7_bs_Fis
-write.csv(table_hf_f7_bs_Fis, file = "results/table_hf_f7_bs_Fis.csv",
-          append = FALSE, quote = FALSE, row.names = TRUE,
-          col.names = TRUE)
-
-#View Ho
-view(hf_f7_bs[["Ho"]])
-
-#Make a table of Ho values only from hf_f7_bs
-table_hf_f7_bs_Ho <- hf_f7_bs[["Ho"]]
-
-#Write a .csv of the object table_hf_f7_bs_Ho
-write.csv(table_hf_f7_bs_Ho,
-          file = "results/table_hf_f7_bs_Ho.csv",
-          append = FALSE, quote = FALSE, row.names = TRUE,
-          col.names = TRUE)
-
-#calculate allelic richness and print output to csv
-hf_filter7_ar <- allelic.richness(data.frame(hf_filter7_pop,
-                                             hf_filter7_loci),
-                                  min.n = NULL,
-                                  diploid = TRUE)
-
-table_ar <- hf_filter7_ar[["Ar"]]
-
-write.csv(table_ar, file = "hierfstat/table_ar.csv", row.names = TRUE,
-          col.names = TRUE)
-
-table(hf_filter7[,1])
-
-#calculate basic statistics
-hf_filter7_basic_stats <- basic.stats(hf_filter7)
-
-#4. POPULATION DIFFERENTIATION
+#5. POPULATION DIFFERENTIATION
 
 #install and load radiator genomic converter
 library(radiator)
@@ -271,16 +274,11 @@ genomic_converter(data = gl_f7_loc_cr,
                   verbose = TRUE)
 
 genomic_converter(data = gi_ss_gl_f7, strata = NULL, output = "structure")
+
 #convert genlight object to arlequin format using radiator genomic converter
 test <- genomic_converter(data = gi_f7_loc_cr, strata = NULL, output = "arlequin")
 genomic_converter(data = gi_ss_gl_f7, strata = NULL, output = "arlequin")
 
-
-?genomic_converter
-
-
-
-gi_f7_loc_cr
 #5.POPULATION SPLITS
 
 #convert genlight to treemix input file format
