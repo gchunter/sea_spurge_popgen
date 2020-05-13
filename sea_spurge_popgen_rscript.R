@@ -9,6 +9,7 @@ library(poppr)
 library(ggplot2)
 library(pegas)
 library(StAMPP)
+library(radiator)
 
 #1. SAMPLE SNP DATA
 
@@ -274,6 +275,7 @@ genomic_converter(data = gl_f7_loc_cr,
                   verbose = TRUE)
 
 genomic_converter(data = gi_ss_gl_f7, strata = NULL, output = "structure")
+genomic_converter(data = ss_gl_f7, output = "vcf")
 
 #convert genlight object to arlequin format using radiator genomic converter
 test <- genomic_converter(data = gi_f7_loc_cr, strata = NULL, output = "arlequin")
