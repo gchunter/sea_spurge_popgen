@@ -10,6 +10,7 @@ library(ggplot2)
 library(pegas)
 library(StAMPP)
 library(radiator)
+library(remotes)
 
 #1. SAMPLE SNP DATA
 
