@@ -1,0 +1,109 @@
+---
+title: Preliminary investigations into the population genetics of sea spurge in Australia
+subtitle: 
+short_title: Population biology of Euphorbia paralias # Delete if not required
+
+author:  Gavin Hunter
+affiliation: CSIRO Health and Biosecurity # Or group/team
+photo: resources/img/photo2.jpg
+
+output: DSreport::project_summary
+---
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(
+  results = 'asis',
+  echo = FALSE,
+  warning = FALSE,
+  message = FALSE,
+  fig.align = 'center'
+)
+
+#Load libraries
+library(tidyverse)
+library(gapminder)
+library(kableExtra)
+```
+
+
+# Introduction
+I am a research scientist in the Temperate Weeds research group of the Managing Invasive Species and Diseases (MISD) research programme of Health and Biosecurity. I am a plant pathoglogist and use classical and DNA-based molecular techniques to investigate the interaction of fungal plant pathogens and their plant hosts. My daily work pattern invovles experiments undertaken in the laboratory, glasshouse and quarantine facilities. I had no previous programming skills before Data School but was always very interested in learning programming to broaden my analytical skill set. 
+
+# My Project
+Sea spurge (Euphorbia paralias), a native of Mediterranean Europe, is an invasive plant in Australian dune and foredune ecosystems. The weed forms dense infestations that reduce the amentiy of public beaches, outcompetes native dune-associated plants and can also restrict the nesting habits of Australian birds. Colleagues and collaborators have collected samples of sea spurge from 48 populations across its distribution along the southern coastline of Australia. Our aim is to understand the genetic diveristy of sea spurge in Australia and to elucidate its invasion pathways across the southern States (WA, SA, VIC, TAS, NSW). To do this, approximately 750 Single Nucleotide Polymorphism (SNP) markers were identified for 364 samples across the 5 States. These data was used to determine various populaiton genetic indices including Observed Heterozygosity (Ho), Gene Diversity (Hs), Inbreeding coefficients (Fis), Alleleic richness (Ar) and the number of private alleles (Pa).
+
+In order to build this demo poster correctly, you will also need to have installed the `tidyverse`, 
+`gapminder`, and `kableExtra` packages.
+
+## Preliminary results
+
+This section will demonstrate the different visuals you might want use to show off your 
+project. Don't feel the need to go overboard, this is supposed to give a taste of the work you are
+doing rather than being a publication ready document.
+
+To get tables formatting correctly, use `knitr::kable` to convert the table to html format. If
+you also want to have alternate row highlighting, pass the result to `kable_styling('striped')` 
+from the `kableExtra` package.
+
+**Tables**
+```{r mytable, out.width='100%', echo = T}
+knitr::kable(head(gapminder, n = 5), format = "html", caption = "A table of data") %>% 
+  kable_styling("striped")
+```
+
+**Images from a file**
+
+![](resources/img/tidyverse.png){width=100px}
+
+**Plots from R**
+```{r standard-plot, out.width='60%', fig.align='center', fig.height= 4, fig.width=6, fig.cap="Yet another gapminder plot"}
+gapminder %>% 
+  filter(year == 1987) %>% 
+  ggplot(aes(x = gdpPercap, y = lifeExp, colour = continent, size = pop)) +
+  geom_point() +
+  scale_x_log10(labels = function(b) format(b, scientific = F)) +
+  scale_size(trans = "sqrt", guide = "none") +
+  scale_color_brewer(palette = "Set1") +
+  theme_linedraw() +
+  theme(legend.position = "bottom")
+```
+
+Your figure and table captions are automatically numbered and can be referenced in the text
+if needed: see eg. Table \@ref(tab:mytable) and Figure \@ref(fig:standard-plot)
+
+# My Digital Toolbox
+
+What digital tools have you been using in your project? Do you expect that everything will be able 
+to be completed within R, or will you need to work with multiple tools to get the right result?
+Which of the digital skills needed for your project have you learned since starting Data School?
+
+You can use all the usual R markdown features in writing a project summary, including lists:
+
+* R - dplyr, ggplot, ...
+* Python
+* SQL
+
+## Favourite tool (optional)
+
+Is there a tool/package/function in particular that you've enjoyed using? Give it a special shout out here. What about this tool makes it your favourite?
+
+![](https://raw.githubusercontent.com/tidyverse/ggplot2/master/man/figures/logo.png){.pull-right width=100px}
+
+No prizes for guessing mine:
+
+# My time went ...
+
+What parts of your project take the most time and effort? Were there any surprising challenges you
+encountered, and how did you solve them?
+
+# Next steps
+
+What further steps do you wish your project could take? Or are there any new digital skills that you
+are keen to develop as a result of your involvement in the Data School?
+
+# My Data School Experience
+
+This summary is mostly about your project. However we would also like to hear about other
+parts of your Data School experience. What aspects of the program did you really enjoy? Have you
+tried applying the skills you have learned in your daily work? Have you been able to transfer this 
+knowledge to your team members? Any descriptions of the personal impact the program has 
+had are welcome here as well!
