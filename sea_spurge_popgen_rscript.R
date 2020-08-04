@@ -10,15 +10,18 @@ library(ggplot2)
 library(pegas)
 library(StAMPP)
 library(radiator)
-library(remotes)
+library(corrplot)
+library(ade4)
+library(magrittr)
+library(ggfortify)
 
-#1. SAMPLE SNP DATA
+##1. SAMPLE SNP DATA
 
 #Assign dartseq file and ind file to a genlight object
 gl_all_samples <- gl.read.dart(filename = "data/Report_DEup19-4268_1_moreOrders_SNP_1.csv",
                    ind.metafile = "data/sea_spurge_ind4_metrics.csv")
 
-#2. SNP FILTERING
+##2. SNP FILTERING
 
 #structure of the genlight object
 gl_all_samples
@@ -104,7 +107,9 @@ popNames(ss_gl_f7)
 #number of individuals in each population in ss_gl_f7
 table(pop(ss_gl_f7))
 
-#3. GENETIC DIVERSITY
+
+
+##3. GENETIC DIVERSITY
 
 #change from genlight to genind
 
@@ -182,6 +187,9 @@ ss_gl_f7_hf_basic_stats <- basic.stats(data.frame(ss_gl_f7_hf_pop,
                                                   ss_gl_f7_hf_loci),
                                        diploid = TRUE, digits = 4)
 
+ss_gl_f7_hf_basic_stats <- basic.stats(ss_gl_f7_hf,
+                                       diploid = TRUE, digits = 4)
+
 ss_gl_f7_hf_state_basic_stats <- basic.stats(ss_gl_f7_hf_state,
                                              diploid = TRUE, digits = 4)
 
@@ -192,46 +200,56 @@ ss_gl_f7_hf_basic_stats_Ho <- ss_gl_f7_hf_basic_stats[["Ho"]] #isolate Ho
 hf_basic_stats_Ho_df <- data.frame(ss_gl_f7_hf_basic_stats_Ho) # Ho to data frame
 hf_basic_stats_Ho_df[is.na(hf_basic_stats_Ho_df)] = 0 #change NA to 0
 colMeans(hf_basic_stats_Ho_df) #means of all columns in Ho
+sapply(hf_basic_stats_Ho_df, function(x)sd(x)/sqrt(length(x))) #calculate standard error of each column (population)
 
 ss_gl_f7_hf_basic_stats_Hs <- ss_gl_f7_hf_basic_stats[["Hs"]] #isolate Hs
 hf_basic_stats_Hs_df <- data.frame(ss_gl_f7_hf_basic_stats_Hs) # Hs to data frame
 hf_basic_stats_Hs_df[is.na(hf_basic_stats_Hs_df)] = 0 #change NA's to 0
 colMeans(hf_basic_stats_Hs_df) #means of all columns in Hs
+sapply(hf_basic_stats_Hs_df, function(x)sd(x)/sqrt(length(x))) #calculate standard error of each column for Hs
 
 ss_gl_f7_hf_basic_stats_Fis <- ss_gl_f7_hf_basic_stats[["Fis"]] #isoalte Fis
 ss_gl_f7_hf_basic_stats_Fis_df <- data.frame(ss_gl_f7_hf_basic_stats_Fis)#Fis to data frame
 ss_gl_f7_hf_basic_stats_Fis_df[is.na(ss_gl_f7_hf_basic_stats_Fis_df)] = 0 #change NA to 0
 colMeans(ss_gl_f7_hf_basic_stats_Fis_df) #means of all columns in Fis
+sapply(ss_gl_f7_hf_basic_stats_Fis_df, function(x)sd(x)/sqrt(length(x))) #calculate standard error of each column for Fis
 
 ss_gl_f7_hf_state_basic_stats_Ho <- ss_gl_f7_hf_state_basic_stats[["Ho"]]
 hf_state_basic_stats_Ho_df <- data.frame(ss_gl_f7_hf_state_basic_stats_Ho)
 hf_state_basic_stats_Ho_df[is.na(hf_state_basic_stats_Ho_df)] = 0
 colMeans(hf_state_basic_stats_Ho_df)
+sapply(hf_state_basic_stats_Ho_df, function(x)sd(x)/sqrt(length(x)))
+
 
 ss_gl_f7_hf_state_basic_stats_Hs <- ss_gl_f7_hf_state_basic_stats[["Hs"]]
 hf_state_basic_stats_Hs_df <- data.frame(ss_gl_f7_hf_state_basic_stats_Hs)
 hf_state_basic_stats_Hs_df[is.na(hf_state_basic_stats_Hs_df)] = 0
 colMeans(hf_state_basic_stats_Hs_df)
+sapply(hf_state_basic_stats_Hs_df, function(x)sd(x)/sqrt(length(x)))
 
 ss_gl_f7_hf_state_basic_stats_Fis <- ss_gl_f7_hf_state_basic_stats[["Fis"]]
 hf_state_basic_stats_Fis_df <- data.frame(ss_gl_f7_hf_state_basic_stats_Fis)
 hf_state_basic_stats_Fis_df[is.na(hf_state_basic_stats_Fis_df)] = 0
 colMeans(hf_state_basic_stats_Fis_df)
+sapply(hf_state_basic_stats_Fis_df, function(x)sd(x)/sqrt(length(x)))
 
 ss_gl_f7_hf_bioreg_basic_stats_Ho <- ss_gl_f7_hf_bioreg_basic_stats[["Ho"]]
 ss_gl_f7_hf_bioreg_basic_stats_Ho_df <- data.frame(ss_gl_f7_hf_bioreg_basic_stats_Ho)
 ss_gl_f7_hf_bioreg_basic_stats_Ho_df[is.na(ss_gl_f7_hf_bioreg_basic_stats_Ho_df)] = 0
 colMeans(ss_gl_f7_hf_bioreg_basic_stats_Ho_df)
+sapply(ss_gl_f7_hf_bioreg_basic_stats_Ho_df, function(x)sd(x)/sqrt(length(x)))
 
 ss_gl_f7_hf_bioreg_basic_stats_Hs <- ss_gl_f7_hf_bioreg_basic_stats[["Hs"]]
 ss_gl_f7_hf_bioreg_basic_stats_Hs_df <- data.frame(ss_gl_f7_hf_bioreg_basic_stats_Hs)
 ss_gl_f7_hf_bioreg_basic_stats_Hs_df[is.na(ss_gl_f7_hf_bioreg_basic_stats_Hs_df)] = 0
 colMeans(ss_gl_f7_hf_bioreg_basic_stats_Hs_df)
+sapply(ss_gl_f7_hf_bioreg_basic_stats_Hs_df, function(x)sd(x)/sqrt(length(x)))
 
 ss_gl_f7_hf_bioreg_basic_stats_Fis <- ss_gl_f7_hf_bioreg_basic_stats[["Fis"]]
 ss_gl_f7_hf_bioreg_basic_stats_Fis_df <- data.frame(ss_gl_f7_hf_bioreg_basic_stats_Fis)
 ss_gl_f7_hf_bioreg_basic_stats_Fis_df[is.na(ss_gl_f7_hf_bioreg_basic_stats_Fis_df)] = 0
 colMeans(ss_gl_f7_hf_bioreg_basic_stats_Fis_df)
+sapply(ss_gl_f7_hf_bioreg_basic_stats_Fis_df, function(x)sd(x)/sqrt(length(x)))
 
 #Allelic Richness
 #population level
@@ -239,29 +257,129 @@ f7_hf_ar <- allelic.richness(ss_gl_f7_hf, min.n = NULL, diploid = TRUE)
 f7_hf_ar_df <- data.frame(f7_hf_ar)
 f7_hf_ar_df[is.na(f7_hf_ar_df)] = 0
 colMeans(f7_hf_ar_df)
+sapply(f7_hf_ar_df, function(x)sd(x)/sqrt(length(x)))
 
 #state level
 f7_hf_state_ar <- allelic.richness(ss_gl_f7_hf_state, min.n = NULL, diploid = TRUE)
 f7_hf_state_ar_df <- data.frame(f7_hf_state_ar)
 f7_hf_state_ar_df[is.na(f7_hf_state_ar_df)] = 0
 colMeans(f7_hf_state_ar_df)
+sapply(f7_hf_state_ar_df, function(x)sd(x)/sqrt(length(x)))
 
 #bioregion level
 f7_hf_bioreg_ar <- allelic.richness(ss_gl_f7_hf_bioreg, min.n = NULL, diploid = TRUE)
 f7_hf_bioreg_ar_df <- data.frame(f7_hf_bioreg_ar)
 f7_hf_bioreg_ar_df[is.na(f7_hf_bioreg_ar_df)] = 0
 colMeans(f7_hf_bioreg_ar_df)
+sapply(f7_hf_bioreg_ar_df, function(x)sd(x)/sqrt(length(x)))
 
-rm(parameters)
 
 #4. POPULATION STRUCTURE
 
-#pairwise Fst
+#pairwise Fst using StAMPP
+ss_gl_f7.fst <- stamppFst(ss_gl_f7, nboots = 1000, percent = 95, nclusters = 1)
+ss_gl_f7.fst_fsts <- ss_gl_f7.fst[["Fsts"]]
+ss_gl_f7.fst_fsts
+f7_fst_fstsdf <- data.frame(ss_gl_f7.fst_fsts)
+f7_fst_fstsdf
+write_csv(f7_fst_fstsdf, path = "results/f7_fst_fstsdf.csv", na = "NA",
+          col_names = TRUE)
+
+#pairwise Fst at state level
+f7_state_fst <- stamppFst(ss_gl_f7_state, nboots = 1000, percent = 95, nclusters = 1)
+f7_state_fsts <- f7_state_fst[["Fsts"]] #isolate Fst
+write.csv(f7_state_fsts, file = "results/f7_state_fsts.csv", na = "NA")
+
+#pairwise Fst at bioregion level
+f7_bioregion_fst <- stamppFst(ss_gl_f7_bioreg, nboots = 1000, percent = 95, nclusters = 1)
+f7_bioreg_fsts <- f7_bioregion_fst[["Fsts"]]
+write.csv(f7_bioreg_fsts, file = "results/f7_bioreg_fsts.csv", na = "NA")
+
+# convert ss_gl_f7 to structure format
+genomic_converter(data = ss_gl_f7, strata = NULL, output = "structure")
 
 
+# DIscriminant Analysis of Principal Components (DAPC)
+?find.clusters
+ss_gl_f7_gi
+pop(ss_gl_f7_gi)
+grp <- find.clusters(ss_gl_f7_gi, max.n.clust = 48)
+grp2 <- find.clusters(ss_gl_f7_gi)
 
+names(grp)
 
----------------------------------------------------------------------------
+head(grp$Kstat)
+
+grp$stat
+
+head(grp$grp)
+
+grp$size
+
+table(pop(ss_gl_f7_gi), grp$grp)
+
+table.value(table(pop(ss_gl_f7_gi), grp$grp),
+            col.labels = paste("inf"), row.labels = paste("ori"))
+
+dapc1 <- dapc(ss_gl_f7_gi, grp$grp)
+
+dapc1
+
+scatter(dapc1)
+
+?scatter.dapc
+
+scatter(dapc1, xax = 1, yax = 2, grp = dapc1$grp,
+        pch = 20, bg = "white", scree.da = TRUE, scree.pca = TRUE,
+        mstree = FALSE, legend = TRUE, posi.leg = "topleft",
+        txt.leg = ss_)
+
+# Principal Component Analysis of genlight object ss_gl_f7
+#PCA using grunwald tutorial on GBS analysis
+#individual level
+ss_gl_f7_pca2 <- glPca(ss_gl_f7, nf = 3)
+
+barplot(100*ss_gl_f7_pca2$eig/sum(ss_gl_f7_pca2$eig),
+        col = heat.colors(50), main = "PCA Eigenvalues")
+title(ylab = "Percent of variance\nexplained", line = 2)
+title(xlab = "Eigenvalues", line = 1)
+
+ss_gl_f7_pca2.scores <- as.data.frame(ss_gl_f7_pca2$scores)
+ss_gl_f7_pca2.scores$pop <- pop(ss_gl_f7)
+
+set.seed(9)
+p <- ggplot(ss_gl_f7_pca2.scores, aes(x = PC1, y = PC2, colour = pop))
+p <- p + geom_point(size = 2)
+#p <- p + stat_ellipse(level = 0.95, size = 1)
+#p <- p + scale_color_manual(values = cols)
+p <- p + geom_hline(yintercept = 0)
+p <- p + geom_vline(xintercept = 0)
+p <- p + theme_gray()
+
+p
+
+#state level
+ss_gl_f7_state_pca <- glPca(ss_gl_f7_state, nf = 3)
+
+barplot(100*ss_gl_f7_state_pca$eig/sum(ss_gl_f7_state_pca$eig),
+        col = heat.colors(50), main = "PCA Eigenvalues")
+title(ylab = "Percent of variance\nexplained", line = 2)
+title(xlab = "Eigenvalues", line = 1)
+
+ss_gl_f7_state_pca.scores <- as.data.frame(ss_gl_f7_state_pca$scores)
+ss_gl_f7_state_pca.scores$pop <- pop(ss_gl_f7_state)
+
+set.seed(9)
+q <- ggplot(ss_gl_f7_state_pca.scores, aes(x = PC1, y = PC2, colour = pop))
+q <- q + geom_point(size = 2)
+#q <- q + stat_ellipse(level = 0.95, size = 1)
+#q <- q + scale_color_manual(values = cols)
+q <- q + geom_hline(yintercept = 0)
+q <- q + geom_vline(xintercept = 0)
+q <- q + theme_gray()
+
+q
+
 
 #5. POPULATION DIFFERENTIATION
 
@@ -345,4 +463,191 @@ write.csv(gt_ss_gl_f7_state_allsum,
           file = "interim/gt_ss_gl_f7_state_allsum.csv",
           row.names = TRUE, col.names = TRUE)
 
+
+
+## Data School Project
+# load data into R
+seaspurge <- read_csv("data/ss_data_focus.csv")
+
+#View data
+View(seaspurge)
+
+# summarise teh dataframe
+summary(seaspurge)
+
+rm(seaspurge)
+
+autoplot(prcomp(x.ss))
+autoplot(prcomp(x.ss), data = x.ss, label = TRUE, label.size = 1)
+
+x.ss
+
+
+sum(is.na(ss_gl_f7_gi$tab))
+X <- tab(ss_gl_f7_gi, freq = TRUE, NA.method = "mean")
+class(X)
+dim(X)
+X[1:5, 1:5]
+ss.pca4 <- dudi.pca(X, scale = FALSE)
+barplot(ss.pca4$eig[1:50], main = "PCA eigenvalues", col = heat.colors(50))
+ss.pca4
+
+s.label(ss.pca4$li)
+title("PCA of ss_gl_f7_gi dataset \ naxes 1-2")
+add.scatter.eig(ss.pca4$eig[1:20], 3, 1, 2)
+
+
+s.class(ss.pca4$li, pop(ss_gl_f7_gi))
+title("PCA of ss_gl_f7_gi dataset \ names 1-2")
+add.scatter.eig(ss.pca4$eig[1:20], 3, 1, 2)
+
+colorplot(ss.pca4$li, ss.pca4$li, transp = TRUE, cex = 3, xlab = "PC1",
+          ylab = "PC2")
+title("PCA of Austrlian sea spurge populations")
+abline(v = 0, h = 0, col = "grey", lty = 2)
+
+s.lab
+
+#principal component of genlight object
+ss.glpca1 <- glPca(ss_gl_f7)
+ss.glpca1
+scatter(ss.glpca1, posi = "topleft")
+legend("topleft",
+       legend = unique(ss_gl_f7$pop),
+       pch = 10,
+       col = c("black", "red"))
+
+myCol <- colorplot(ss.glpca1$scores, ss.glpca1$scores, transp = TRUE, cex = 4)
+mycol2 <- ss_gl_f7@pop
+View(mycol2)
+abline(h = 0, v = 0, col = "grey")
+?colorplot
+?plot.default
+ss_gl_f7$ind.names
+ss_gl_f7$pop
+plot(ss.glpca1$scores[,1], ss.glpca1$scores[,2],
+     cex = 2, pch = 20, col = ss_gl_f7@pop,
+     xlab = "PC1",
+     ylab = "PC2",
+     main = "PCA on ss_gl_f7")
+
+add.scatter.eig(ss.glpca1$eig, ratio = 0.25, wsel = c(xax, yax)
+                posi = "bottomleft")
+
+legend("topleft",
+       legend = unique(ss_gl_f7$pop),
+       pch = 20,
+       col = ss_gl_f7@pop)
+
+scatter(ss.glpca1, xax = 1, yax = 2,
+        posi = "bottomright", ratio = 0.3,
+        labels = rownames(ss.glpca1$scores))
+
+
+title("PCA of sea spurge in Australia")
+
+
+?scatter.glPca
+
+df <- ss.glpca1[["scores"]]
+df
+View(df)
+pca_res <- prcomp(df, scale. = TRUE)
+autoplot(df)
+df
+write_csv(df, file = "results/df.csv", sep = "",
+           row.names = TRUE, col.names = TRUE)
+df_tidy <- as_tibble(df)
+rm(df_tidy)
+df2 <- as.data.frame(df, row.names = NULL, col.names = TRUE)
+df2
+class(df2)
+write.table(df2, file = "results/df2.csv", sep = " ",
+            row.names = TRUE, col.names = TRUE)
+?write.csv2
+df3 <- as.data.frame(ss_gl_f7@pop)
+df3
+write.table(df3, file = "results/df3.csv")
+df4 <- read_csv("data/df2pca.csv", col_names = TRUE)
+df4
+df5 <- df4[1:4]
+pca_res <- prcomp(df5, scale. = TRUE)
+autoplot(pca_res)
+autoplot(pca_res, data = df4, colour = 'pop', label = TRUE, label.size = 2)
+autoplot(pca_res, data = df4, colour = 'pop',
+         label = TRUE, label.size = 2, loadings = TRUE)
+
+ss_gl_f7
+tree <- aboot(ss_gl_f7, tree = "upgma", distance = bitwise.dist,
+              sample = 100, showtree = F, cutoff = 50, quiet = T)
+plot.phylo(tree, cex = 0.8, font = 2, adj = 0)
+rm(tree)
+
+ss_gl_f7_pca <- glPca(ss_gl_f7, nf = 3)
+
+barplot(100*ss_gl_f7_pca$eig/sum(ss_gl_f7_pca$eig), col = heat.colors(50),
+        main = "PCA Eigenvalues")
+title(ylab = "percent of variance /nexplained", line = 2)
+title(xlab = "Eigenvalues", line = 1)
+
+rm(ss.pca3)
+sum(is.na(ss_gl_f7_gi$tab))
+z <- tab(ss_gl_f7_gi, freq = TRUE, NA.method = "mean")
+class(z)
+dim(z)
+z[1:5, 1:5]
+pca.z <- dudi.pca(z, scale = FALSE, scannf = FALSE)
+pca.z
+s.label(pca.z$li)
+add.scatter.eig(pca.z$eig[1:20], 3, 1, 2)
+s.class(pca.z$li, pop(ss_gl_f7_gi), xax = 1, yax = 3, col = transp(col, .6),
+        axesell = FALSE, cstar = 0, cpoint = 3, grid = FALSE)
+col <- funky(15)
+
+ss.pca1 <- glPca(ss_gl_f7)
+ss.pca1
+scatter(ss.pca1, posi = "topleft")
+s.class(ss.pca1$li, fac = pop(ss_gl_f7), col = funky(15))
+?scatter
+?glPca
+
+ss.pca2 <- glPca(ss_gl_f7, center = TRUE, scale = FALSE, nf = NULL,
+                 loadings = TRUE, alleleAsUnit = FALSE, useC = TRUE,
+                 parallel = FALSE, n.cores = NULL, returnDotProd = FALSE,
+                 matDotProd = NULL)
+ss.pca2
+scatter.glPca(ss.pca2, xax = 1, yax = 2, posi = "topleft", bg = "white",
+              ratio = 0.3, label = rownames(ss.pca2$scores), clabel = 1,
+              xlim = NULL, ylim = NULL, grid = TRUE, addaxes = TRUE,
+              origin = (0, 0), include.origin = TRUE, sub = "",
+              csub = 1, possub = "bottomleft", cgrid = 1, pixmap = NULL,
+              contour = NULL, area = NULL)
+
+scatter.glPca(ss.pca2, xax = 1, yax = 2, posi = "topleft", bg = "white",
+              ratio = 0.3, label = rownames(ss.pca2$scores), clabel = 1)
+
+?scatter.glPca
+s.class(ss.pca2$scores, pop(ss_gl_f7), col = colors())
+add.scatter.eig(ss.pca2$eig, 2, 1, 2)
+
+x.ss <- tab(ss_gl_f7, freq = TRUE, NA.method = "mean")
+ss.pca3 <- dudi.pca(x.ss, center = TRUE, scale = FALSE)
+ss.pca3
+s.label(ss.pca3$li)
+
+s.class(ss.pca3$li, fac = pop(ss_gl_f7), col = funky(15))
+
+s.class(ss.pca3$li, fac = pop(ss_gl_f7),
+        col = transp(funky(15), .6),
+        axesell = FALSE, cstar = 0, cpoint = 3)
+add.scatter.eig(ss.pca3$eig[1:50], 3, 1, 2, ratio = .3)
+
+
+?s.class
+
+
+s.class(ss.pca3$li, fac = pop(ss_gl_f7),
+        xax = 2, yax = 3, col = transp(funky(15), .6),
+        axesel = FALSE, cstar = 0, cpoint = 3)
+add.scatter.eig(ss.pca3$eig[1:50], 3, 2, 3, ratio = .3)
 
