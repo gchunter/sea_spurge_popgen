@@ -6,7 +6,6 @@ library(tidyverse)
 library(ggplot2)
 library(strataG)
 library(poppr)
-library(ggplot2)
 library(pegas)
 library(StAMPP)
 library(radiator)
@@ -14,6 +13,7 @@ library(corrplot)
 library(ade4)
 library(magrittr)
 library(ggfortify)
+library(RColorBrewer)
 
 ##1. SAMPLE SNP DATA
 
@@ -299,89 +299,86 @@ write.csv(f7_bioreg_fsts, file = "results/f7_bioreg_fsts.csv", na = "NA")
 genomic_converter(data = ss_gl_f7, strata = NULL, output = "structure")
 
 
-# DIscriminant Analysis of Principal Components (DAPC)
-?find.clusters
-ss_gl_f7_gi
-pop(ss_gl_f7_gi)
-grp <- find.clusters(ss_gl_f7_gi, max.n.clust = 48)
-grp2 <- find.clusters(ss_gl_f7_gi)
-
-names(grp)
-
-head(grp$Kstat)
-
-grp$stat
-
-head(grp$grp)
-
-grp$size
-
-table(pop(ss_gl_f7_gi), grp$grp)
-
-table.value(table(pop(ss_gl_f7_gi), grp$grp),
-            col.labels = paste("inf"), row.labels = paste("ori"))
-
-dapc1 <- dapc(ss_gl_f7_gi, grp$grp)
-
-dapc1
-
-scatter(dapc1)
-
-?scatter.dapc
-
-scatter(dapc1, xax = 1, yax = 2, grp = dapc1$grp,
-        pch = 20, bg = "white", scree.da = TRUE, scree.pca = TRUE,
-        mstree = FALSE, legend = TRUE, posi.leg = "topleft",
-        txt.leg = ss_)
-
-# Principal Component Analysis of genlight object ss_gl_f7
-#PCA using grunwald tutorial on GBS analysis
-#individual level
+### Principal Component Analysis of genlight object ss_gl_f7
+##PCA at the individual level
 ss_gl_f7_pca2 <- glPca(ss_gl_f7, nf = 3)
 
+#Determine the variance explained by eigenvalues
 barplot(100*ss_gl_f7_pca2$eig/sum(ss_gl_f7_pca2$eig),
         col = heat.colors(50), main = "PCA Eigenvalues")
 title(ylab = "Percent of variance\nexplained", line = 2)
 title(xlab = "Eigenvalues", line = 1)
 
+#Determine proportion of variance explained
+PVE_ind <- ss_gl_f7_pca2$eig/sum(ss_gl_f7_pca2$eig) 
+round(PVE_ind, 2)
+
+#round(sum(ss_gl_f7_pca2$eig[1:29]/sum(ss_gl_f7_pca2$eig)), digits = 5)
+
 ss_gl_f7_pca2.scores <- as.data.frame(ss_gl_f7_pca2$scores)
 ss_gl_f7_pca2.scores$pop <- pop(ss_gl_f7)
 
-set.seed(9)
-p <- ggplot(ss_gl_f7_pca2.scores, aes(x = PC1, y = PC2, colour = pop))
-p <- p + geom_point(size = 2)
-#p <- p + stat_ellipse(level = 0.95, size = 1)
-#p <- p + scale_color_manual(values = cols)
-p <- p + geom_hline(yintercept = 0)
-p <- p + geom_vline(xintercept = 0)
-p <- p + theme_gray()
+# Plot the PCA at the individual level
+ind_pca <- ggplot(data = ss_gl_f7_pca2.scores,
+                  mapping = aes(x = PC1, y = PC2, colour = pop)) +
+        geom_point(size = 2) +
+        theme_gray() +
+        labs(x = "PC1 (20.0 %)", y = "PC2 (14.0 %)")
+ind_pca
 
-p
-
-#state level
+## PCA at the state level
 ss_gl_f7_state_pca <- glPca(ss_gl_f7_state, nf = 3)
 
+#Determine the variance explained by eigenvalues
 barplot(100*ss_gl_f7_state_pca$eig/sum(ss_gl_f7_state_pca$eig),
         col = heat.colors(50), main = "PCA Eigenvalues")
 title(ylab = "Percent of variance\nexplained", line = 2)
 title(xlab = "Eigenvalues", line = 1)
 
+#Determine proportion of variance explained
+PVE <- ss_gl_f7_state_pca$eig/sum(ss_gl_f7_state_pca$eig) 
+round(PVE, 2)
+
 ss_gl_f7_state_pca.scores <- as.data.frame(ss_gl_f7_state_pca$scores)
 ss_gl_f7_state_pca.scores$pop <- pop(ss_gl_f7_state)
 
-set.seed(9)
-q <- ggplot(ss_gl_f7_state_pca.scores, aes(x = PC1, y = PC2, colour = pop))
-q <- q + geom_point(size = 2)
-#q <- q + stat_ellipse(level = 0.95, size = 1)
-#q <- q + scale_color_manual(values = cols)
-q <- q + geom_hline(yintercept = 0)
-q <- q + geom_vline(xintercept = 0)
-q <- q + theme_gray()
+#Plot the PCA at the state level
+state_pca <- ggplot(data = ss_gl_f7_state_pca.scores, 
+            mapping = aes(x = PC1, y = PC2, colour = pop)) +
+        geom_point(size = 2) +
+        scale_colour_manual(values = c("red", "green", "blue", "purple", "black", "orange")) +
+        theme_gray() +
+        labs(x = "PC1 (20.0%)", y = "PC2 (14.0%)") +
+        stat_ellipse(level = 0.90, size = 1)
+state_pca
 
-q
+##PCA at the bioregion level
+ss_gl_f7_bioreg_pca <- glPca(ss_gl_f7_bioreg, nf = 30)
+
+#Determine the proportion of variance explained at bioreg level
+PVE_bioreg <- ss_gl_f7_bioreg_pca$eig/sum(ss_gl_f7_bioreg_pca$eig)
+round(PVE_bioreg, 2)
+
+#Determine the amount of variance explained by the number of retained PCAs
+round(sum(ss_gl_f7_bioreg_pca$eig[1:30]/sum(ss_gl_f7_bioreg_pca$eig)), digits = 5)
+
+#Convert he PCA scores to a data frame
+ss_gl_f7_bioreg_pca.scores <- as.data.frame(ss_gl_f7_bioreg_pca$scores)
+ss_gl_f7_bioreg_pca.scores$pop <- pop(ss_gl_f7_bioreg)
+
+#Plot the PCA at the bioregion level
+bioreg_pca_plot <- ggplot(data = ss_gl_f7_bioreg_pca.scores,
+                          mapping = aes(x = PC1, y = PC2, colour = pop)) +
+        geom_point(size = 2) +
+        theme_gray() +
+        labs(x = "PC1 (20.0 %)", y = "PC2 (14.0 %)")
+
+bioreg_pca_plot
 
 
-#5. POPULATION DIFFERENTIATION
+
+
+##5. POPULATION DIFFERENTIATION
 
 #install and load radiator genomic converter
 library(radiator)
@@ -583,71 +580,4 @@ tree <- aboot(ss_gl_f7, tree = "upgma", distance = bitwise.dist,
 plot.phylo(tree, cex = 0.8, font = 2, adj = 0)
 rm(tree)
 
-ss_gl_f7_pca <- glPca(ss_gl_f7, nf = 3)
-
-barplot(100*ss_gl_f7_pca$eig/sum(ss_gl_f7_pca$eig), col = heat.colors(50),
-        main = "PCA Eigenvalues")
-title(ylab = "percent of variance /nexplained", line = 2)
-title(xlab = "Eigenvalues", line = 1)
-
-rm(ss.pca3)
-sum(is.na(ss_gl_f7_gi$tab))
-z <- tab(ss_gl_f7_gi, freq = TRUE, NA.method = "mean")
-class(z)
-dim(z)
-z[1:5, 1:5]
-pca.z <- dudi.pca(z, scale = FALSE, scannf = FALSE)
-pca.z
-s.label(pca.z$li)
-add.scatter.eig(pca.z$eig[1:20], 3, 1, 2)
-s.class(pca.z$li, pop(ss_gl_f7_gi), xax = 1, yax = 3, col = transp(col, .6),
-        axesell = FALSE, cstar = 0, cpoint = 3, grid = FALSE)
-col <- funky(15)
-
-ss.pca1 <- glPca(ss_gl_f7)
-ss.pca1
-scatter(ss.pca1, posi = "topleft")
-s.class(ss.pca1$li, fac = pop(ss_gl_f7), col = funky(15))
-?scatter
-?glPca
-
-ss.pca2 <- glPca(ss_gl_f7, center = TRUE, scale = FALSE, nf = NULL,
-                 loadings = TRUE, alleleAsUnit = FALSE, useC = TRUE,
-                 parallel = FALSE, n.cores = NULL, returnDotProd = FALSE,
-                 matDotProd = NULL)
-ss.pca2
-scatter.glPca(ss.pca2, xax = 1, yax = 2, posi = "topleft", bg = "white",
-              ratio = 0.3, label = rownames(ss.pca2$scores), clabel = 1,
-              xlim = NULL, ylim = NULL, grid = TRUE, addaxes = TRUE,
-              origin = (0, 0), include.origin = TRUE, sub = "",
-              csub = 1, possub = "bottomleft", cgrid = 1, pixmap = NULL,
-              contour = NULL, area = NULL)
-
-scatter.glPca(ss.pca2, xax = 1, yax = 2, posi = "topleft", bg = "white",
-              ratio = 0.3, label = rownames(ss.pca2$scores), clabel = 1)
-
-?scatter.glPca
-s.class(ss.pca2$scores, pop(ss_gl_f7), col = colors())
-add.scatter.eig(ss.pca2$eig, 2, 1, 2)
-
-x.ss <- tab(ss_gl_f7, freq = TRUE, NA.method = "mean")
-ss.pca3 <- dudi.pca(x.ss, center = TRUE, scale = FALSE)
-ss.pca3
-s.label(ss.pca3$li)
-
-s.class(ss.pca3$li, fac = pop(ss_gl_f7), col = funky(15))
-
-s.class(ss.pca3$li, fac = pop(ss_gl_f7),
-        col = transp(funky(15), .6),
-        axesell = FALSE, cstar = 0, cpoint = 3)
-add.scatter.eig(ss.pca3$eig[1:50], 3, 1, 2, ratio = .3)
-
-
-?s.class
-
-
-s.class(ss.pca3$li, fac = pop(ss_gl_f7),
-        xax = 2, yax = 3, col = transp(funky(15), .6),
-        axesel = FALSE, cstar = 0, cpoint = 3)
-add.scatter.eig(ss.pca3$eig[1:50], 3, 2, 3, ratio = .3)
 
