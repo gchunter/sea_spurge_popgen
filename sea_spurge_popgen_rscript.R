@@ -14,6 +14,7 @@ library(ade4)
 library(magrittr)
 library(ggfortify)
 library(RColorBrewer)
+library(ape)
 
 ##1. SAMPLE SNP DATA
 
@@ -346,11 +347,16 @@ ss_gl_f7_state_pca.scores$pop <- pop(ss_gl_f7_state)
 state_pca <- ggplot(data = ss_gl_f7_state_pca.scores, 
             mapping = aes(x = PC1, y = PC2, colour = pop)) +
         geom_point(size = 2) +
-        scale_colour_manual(values = c("red", "green", "blue", "purple", "black", "orange")) +
+        scale_color_brewer(palette = "Dark2") +
+        #scale_colour_manual(values = c("red", "green", "blue", "purple", "black", "orange")) +
         theme_gray() +
-        labs(x = "PC1 (20.0%)", y = "PC2 (14.0%)") +
-        stat_ellipse(level = 0.90, size = 1)
+        labs(x = "PC1 (20.0%)", y = "PC2 (14.0%)")
+        #stat_ellipse(level = 0.90, size = 1)
 state_pca
+
+#Save the state level PCA plot using ggsave
+ggsave(filename = "results/state_pca_ss_gl_f7_dark2.png", plot = state_pca,
+       width = 20, height = 10, dpi = 300, units = "cm")
 
 ##PCA at the bioregion level
 ss_gl_f7_bioreg_pca <- glPca(ss_gl_f7_bioreg, nf = 30)
@@ -375,8 +381,22 @@ bioreg_pca_plot <- ggplot(data = ss_gl_f7_bioreg_pca.scores,
 
 bioreg_pca_plot
 
+##Discriminant Analysis of Principal Components (DAPC)
+#At the state level
+state.dapc <- dapc(ss_gl_f7_state)
 
+#Do a scatter plot of the DAPC results
+scatter(state.dapc, cex = 2, legend = TRUE,
+        clabel = F, posi.leg = "topright", scree.pca = TRUE,
+        posi.pca = "bottomleft", cleg = 0.75)
 
+#At the individual level
+indiv.dapc <- dapc(ss_gl_f7)
+
+#Do a scatter plot of the DAPC results
+scatter(indiv.dapc, cex = 2, legend = TRUE, clabel = F,
+        posi.leg = "bottomright", scree.pca = TRUE,
+        posi.pca = "topright", cleg = 0.75)
 
 ##5. POPULATION DIFFERENTIATION
 
@@ -418,166 +438,42 @@ gi_ss_gl_f7_df <- genind2df(gi_ss_gl_f7, pop = NULL, usepop = FALSE, oneColPerAl
 View(gi_ss_gl_f7_df)
 rm(gi_ss_gl_f7_df)
 ----------------------------------------------------------------------
-View(ss_gl_f7)
-
-gi_ss_gl_f7_gi2df <- genind2df(gi_ss_gl_f7, pop = TRUE,
-                               sep = " ", usepop = TRUE,
-                               oneColPerAll = TRUE)
-rm(gi_ss_gl_f7_gi2df)
-
-pca1 <- glPca(ss_gl_f7)
-pca1
-#glPca object can be displayed using scatter (a scatterplot of principal components)
-scatter(pca1, posi = "bottomright")
-title("PCA of sea spurge populaitons in Australia")
-library(ape)
-tre <- nj(dist(as.matrix(ss_gl_f7)))
-tre
-plot(tre, typ = "fan", cex = 0.7)
-title("NJ tree of the Aus data")
-
-myCol <- colorplot(pca1$scores, pca1$scores, transp = TRUE, cex = 4)
-abline(h = 0, v = 0, col = "grey")
-add.scatter.eig(pca1$eig[1:40], 2, 1, 2, posi = "topright", inset = .05, ratio = .3)
-
-plot(tre, typ = "fan", show.tip = FALSE)
-tiplabels(pch = 20, col = myCol, cex = 4)
-title("NJ tree of the Aus sea spurge data")
-
-#DAPC PCA
-dapc1 <- dapc(ss_gl_f7, n.pca = 10, n.da = 1)
-scatter(dapc1, scree.da = FALSE, bg = "white", posi.pca = "topright",
-        legend = TRUE, txt.leg = paste("group", 1:2), col = c("red", "blue"))
-
-
-#Write summarizeLoci data to .csv for all levels
-#population level
-write.csv(gt_ss_gl_f7_allsum,
-          file = "results/gt_ss_f7_allsum.csv",
-          row.names = TRUE, col.names = TRUE)
-#state level
-write.csv(gt_ss_gl_f7_state_allsum,
-          file = "interim/gt_ss_gl_f7_state_allsum.csv",
-          row.names = TRUE, col.names = TRUE)
 
 
 
-## Data School Project
-# load data into R
-seaspurge <- read_csv("data/ss_data_focus.csv")
 
-#View data
-View(seaspurge)
+##AMOVA on geneclone object to determine possible structure
+ss_gl_f7_gc <- as.genclone(ss_gl_f7_gi)
+ss_gl_f7_gc
+rm(ss_gl_f7_gc)
+ss_gl_f7_gi@other
+strata(ss_gl_f7_gi) <- data.frame(other(ss_gl_f7_gi)$ind.metris[2:4])
+View(ss_gl_f7_gi[[ind.metrics]])
+ss_hier = read.table("data/ss_gl_f7_gi_pop_assignment.txt", header = T)
+?read.table
+ss_hier = read.csv("data/ss_gl_f7_gi_pop_assignment.csv", header = TRUE)
+View(ss_hier)
 
-# summarise teh dataframe
-summary(seaspurge)
+gc_strat = as.genclone(ss_gl_f7_gc, strata = ss_hier)
+gc_strat
+rm(gc_strat)
 
-rm(seaspurge)
-
-autoplot(prcomp(x.ss))
-autoplot(prcomp(x.ss), data = x.ss, label = TRUE, label.size = 1)
-
-x.ss
-
-
-sum(is.na(ss_gl_f7_gi$tab))
-X <- tab(ss_gl_f7_gi, freq = TRUE, NA.method = "mean")
-class(X)
-dim(X)
-X[1:5, 1:5]
-ss.pca4 <- dudi.pca(X, scale = FALSE)
-barplot(ss.pca4$eig[1:50], main = "PCA eigenvalues", col = heat.colors(50))
-ss.pca4
-
-s.label(ss.pca4$li)
-title("PCA of ss_gl_f7_gi dataset \ naxes 1-2")
-add.scatter.eig(ss.pca4$eig[1:20], 3, 1, 2)
-
-
-s.class(ss.pca4$li, pop(ss_gl_f7_gi))
-title("PCA of ss_gl_f7_gi dataset \ names 1-2")
-add.scatter.eig(ss.pca4$eig[1:20], 3, 1, 2)
-
-colorplot(ss.pca4$li, ss.pca4$li, transp = TRUE, cex = 3, xlab = "PC1",
-          ylab = "PC2")
-title("PCA of Austrlian sea spurge populations")
-abline(v = 0, h = 0, col = "grey", lty = 2)
-
-s.lab
-
-#principal component of genlight object
-ss.glpca1 <- glPca(ss_gl_f7)
-ss.glpca1
-scatter(ss.glpca1, posi = "topleft")
-legend("topleft",
-       legend = unique(ss_gl_f7$pop),
-       pch = 10,
-       col = c("black", "red"))
-
-myCol <- colorplot(ss.glpca1$scores, ss.glpca1$scores, transp = TRUE, cex = 4)
-mycol2 <- ss_gl_f7@pop
-View(mycol2)
-abline(h = 0, v = 0, col = "grey")
-?colorplot
-?plot.default
-ss_gl_f7$ind.names
-ss_gl_f7$pop
-plot(ss.glpca1$scores[,1], ss.glpca1$scores[,2],
-     cex = 2, pch = 20, col = ss_gl_f7@pop,
-     xlab = "PC1",
-     ylab = "PC2",
-     main = "PCA on ss_gl_f7")
-
-add.scatter.eig(ss.glpca1$eig, ratio = 0.25, wsel = c(xax, yax)
-                posi = "bottomleft")
-
-legend("topleft",
-       legend = unique(ss_gl_f7$pop),
-       pch = 20,
-       col = ss_gl_f7@pop)
-
-scatter(ss.glpca1, xax = 1, yax = 2,
-        posi = "bottomright", ratio = 0.3,
-        labels = rownames(ss.glpca1$scores))
-
-
-title("PCA of sea spurge in Australia")
-
-
-?scatter.glPca
-
-df <- ss.glpca1[["scores"]]
-df
-View(df)
-pca_res <- prcomp(df, scale. = TRUE)
-autoplot(df)
-df
-write_csv(df, file = "results/df.csv", sep = "",
-           row.names = TRUE, col.names = TRUE)
-df_tidy <- as_tibble(df)
-rm(df_tidy)
-df2 <- as.data.frame(df, row.names = NULL, col.names = TRUE)
-df2
-class(df2)
-write.table(df2, file = "results/df2.csv", sep = " ",
-            row.names = TRUE, col.names = TRUE)
-?write.csv2
-df3 <- as.data.frame(ss_gl_f7@pop)
-df3
-write.table(df3, file = "results/df3.csv")
-df4 <- read_csv("data/df2pca.csv", col_names = TRUE)
-df4
-df5 <- df4[1:4]
-pca_res <- prcomp(df5, scale. = TRUE)
-autoplot(pca_res)
-autoplot(pca_res, data = df4, colour = 'pop', label = TRUE, label.size = 2)
-autoplot(pca_res, data = df4, colour = 'pop',
-         label = TRUE, label.size = 2, loadings = TRUE)
-
+strata(gc_strat) = gc_strat[-1]
+strata(ss_gl_f7_gi)
+ss
+names(other(ss_gl_f7_gi))
+ind.met <- ss_gl_f7_gi@other[["ind.metrics"]]
 ss_gl_f7
-tree <- aboot(ss_gl_f7, tree = "upgma", distance = bitwise.dist,
-              sample = 100, showtree = F, cutoff = 50, quiet = T)
-plot.phylo(tree, cex = 0.8, font = 2, adj = 0)
-rm(tree)
-
-
+View(ss_gl_f7)
+ind.met
+class(ind.met)
+ind.met.strata <- select(ind.met, id, pop, state)
+ind.met.strata
+ss_gl_f7_gi
+strata(ss_gl_f7_gc) <- data.frame(ind.met.strata)
+ss_gl_f7_gc
+table(strata(ss_gl_f7_gc))
+gc_amova <- poppr.amova(ss_gl_f7_gc, ~pop/state, cutoff = 0.03)
+gc_amova
+gc_amova_cc <- poppr.amova(ss_gl_f7_gc, ~pop/state, clonecorrect = TRUE)
+gc_amova_cc
